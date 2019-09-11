@@ -107,18 +107,66 @@ func createReq(req[]byte) (message string) {
 }
 
 func createReq2(req []byte) (message string) {
-    //key := []byte("11111111111111111111111111111111")
+    var cipher[]byte
+    var err error
+    key := []byte("11111111111111111111111111111111")
 
     plaintext := make([]byte, 8 + 16 + 8 + len(req))
     random := rand2.Uint64()
+    
+    // add random
     binary.LittleEndian.PutUint64(plaintext, random)
+    // add timestamp
     binary.LittleEndian.PutUint64(plaintext[8+16:], uint64(time.Now().Unix()))
+    // add request body
     copy(plaintext[8+16+8:], req)
+    fmt.Printf("plaintext=%s %d\n", base64.StdEncoding.EncodeToString(plaintext), len(plaintext))
+    checksum := md5.Sum(plaintext)
+    fmt.Printf("checksum=%s\n", base64.StdEncoding.EncodeToString(checksum[:]))
+    copy(plaintext[8:], checksum[:])
+    fmt.Printf("plaintext=%s %d\n", base64.StdEncoding.EncodeToString(plaintext), len(plaintext))
 
+    if cipher, err = encryptCBC(key, Pad(plaintext)); err != nil {
+        panic(err)
+    }
 
-
+    message = base64.StdEncoding.EncodeToString(cipher)
+    fmt.Printf("CBC: %s\n", message)
 
     return
+}
+
+func checkMessage2(message string) {
+    var cipher[]byte
+    var err error
+    key := []byte("11111111111111111111111111111111")
+    var paddingtext []byte
+
+    if cipher, err = base64.StdEncoding.DecodeString(message); err != nil {
+        panic(err)
+    }
+
+    if paddingtext, err = decryptCBC(key, cipher); err != nil {
+        panic(err)
+    }
+
+    plaintext := Unpad(paddingtext);
+    fmt.Printf("plaintext=%s %d\n", base64.StdEncoding.EncodeToString(plaintext), len(plaintext))
+
+    checksum2 := make([]byte, 16)
+    copy(checksum2, plaintext[8:24])
+    fmt.Printf("checksum=%s\n", base64.StdEncoding.EncodeToString(checksum2))
+    filltext := bytes.Repeat([]byte{byte(0)}, 16)
+    copy(plaintext[8:], filltext[:])
+    fmt.Printf("plaintext=%s %d\n", base64.StdEncoding.EncodeToString(plaintext), len(plaintext))
+    checksum3 := md5.Sum(plaintext)
+    fmt.Printf("checksum=%s\n", base64.StdEncoding.EncodeToString(checksum2))
+    fmt.Printf("checksum=%s\n", base64.StdEncoding.EncodeToString(checksum3[:]))
+
+    if bytes.Compare(checksum2, checksum3[:]) != 0 {
+        panic("not equal")
+    }
+
 }
 
 func checkMessage(message string) {
@@ -152,12 +200,12 @@ func checkMessage(message string) {
 
 func main() {
 
-    message := createReq([]byte("longer MEANS more POSSIBLE keys"))
+    //message := createReq([]byte("longer MEANS more POSSIBLE keys"))
 
-    checkMessage(message)
+    //checkMessage(message)
 
-    fmt.Printf("Clear from CBC: %s\n", message)
+    //fmt.Printf("Clear from CBC: %s\n", message)
 
-    createReq2([]byte("ddddddd"))
+    checkMessage2(createReq2([]byte("ddddddd")))
 }
 
