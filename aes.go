@@ -6,6 +6,7 @@ import (
     "crypto/cipher"
     "fmt"
     "crypto/rand"
+    rand2 "math/rand"
     "io"
     "encoding/base64"
     "encoding/hex"
@@ -105,6 +106,21 @@ func createReq(req[]byte) (message string) {
     return
 }
 
+func createReq2(req []byte) (message string) {
+    //key := []byte("11111111111111111111111111111111")
+
+    plaintext := make([]byte, 8 + 16 + 8 + len(req))
+    random := rand2.Uint64()
+    binary.LittleEndian.PutUint64(plaintext, random)
+    binary.LittleEndian.PutUint64(plaintext[8+16:], uint64(time.Now().Unix()))
+    copy(plaintext[8+16+8:], req)
+
+
+
+
+    return
+}
+
 func checkMessage(message string) {
     key := []byte("11111111111111111111111111111111")
     var err error
@@ -123,8 +139,8 @@ func checkMessage(message string) {
     fmt.Printf(string(text) + "\n")
 
     checksum := text[:16]
-    ts := text[16:16+8]
-    i := int64(binary.LittleEndian.Uint64(ts))
+    //ts := text[16:16+8]
+    //i := int64(binary.LittleEndian.Uint64(ts))
     req := text[16+8:]
     sum := md5.Sum(req)
 
@@ -141,5 +157,7 @@ func main() {
     checkMessage(message)
 
     fmt.Printf("Clear from CBC: %s\n", message)
+
+    createReq2([]byte("ddddddd"))
 }
 
