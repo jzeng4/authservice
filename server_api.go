@@ -5,8 +5,15 @@ import (
 	//"crypto/x509"
 	//"io/ioutil"
 	"log"
+        "fmt"
 	"net/http"
 )
+
+var mp = map[string]string {
+    "client1" : "client1",
+    "client2" : "client2",
+    "master1" : "master1",
+}
 
 func main() {
 	//caCert, err := ioutil.ReadFile("client.crt")
@@ -30,5 +37,7 @@ func main() {
 type handler struct{}
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+        fmt.Printf("id=%s", req.URL.Query()["id"][0])
 	w.Write([]byte("PONG\n"))
 }
+

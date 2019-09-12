@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+        "net/url"
 )
 
 func main() {
@@ -32,7 +33,7 @@ func main() {
 		},
 	}
 
-	resp, err := client.Get("https://localhost:443")
+	resp, err := client.PostForm("https://localhost:443?id=123", url.Values{"key": {"Value"}, "id": {"123"}})
 	if err != nil {
 		log.Println(err)
 		return
